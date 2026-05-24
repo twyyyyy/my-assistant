@@ -1,5 +1,7 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 type PlanType = "Recovery" | "Balanced" | "High Output";
@@ -1018,6 +1020,13 @@ function getDefaultTrainings(todayDate: string): TrainingItem[] {
 }
 
 export default function Home() {
+
+  const [user, setUser] = useState<User | null>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
   const todayDate = getTodayDateString();
   const inputSectionRef = useRef<HTMLElement | null>(null);
 
@@ -1080,6 +1089,20 @@ export default function Home() {
     intensity: "Low" as TrainingIntensity,
     targetDistance: "",
   });
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const savedReadiness = loadFromStorage<ReadinessState>(
@@ -1716,6 +1739,59 @@ export default function Home() {
     });
   }
 
+  async function signUp() {
+    if (!authEmail || !authPassword) {
+      setAuthMessage("Enter your email and password first.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthMessage("");
+
+    const { error } = await supabase.auth.signUp({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+    } else {
+      setAuthMessage("Account created. Check your email if confirmation is required.");
+    }
+
+    setAuthLoading(false);
+  }
+
+  async function signIn() {
+    if (!authEmail || !authPassword) {
+      setAuthMessage("Enter your email and password first.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthMessage("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+    } else {
+      setAuthMessage("Logged in successfully.");
+      setAuthEmail("");
+      setAuthPassword("");
+    }
+
+    setAuthLoading(false);
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setAuthMessage("Logged out.");
+  }
+
   function clearSavedData() {
     window.localStorage.removeItem(STORAGE_KEYS.events);
     window.localStorage.removeItem(STORAGE_KEYS.focusTasks);
@@ -1727,7 +1803,7 @@ export default function Home() {
 
   function confirmPlan() {
     setConfirmedMessage(
-      "Today’s plan is confirmed. Data is saved on this device. Use Supabase later when you want laptop and phone to share the same account data.",
+      "Today’s plan is confirmed. Local device saving is still active. Supabase data sync comes next after login is tested.",
     );
   }
 
@@ -1814,6 +1890,83 @@ export default function Home() {
             </div>
           </div>
         </header>
+
+        <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
+          {user ? (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
+                  Account
+                </p>
+                <p className="mt-2 text-sm text-slate-300">
+                  Logged in as <span className="text-white">{user.email}</span>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+              >
+                Log out
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+                Account
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">
+                Sign in to sync your dashboard
+              </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Create an account first. Supabase sync will be connected after login works.
+              </p>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={authEmail}
+                  onChange={(event) => setAuthEmail(event.target.value)}
+                  className="rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+                />
+
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={authPassword}
+                  onChange={(event) => setAuthPassword(event.target.value)}
+                  className="rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+                />
+
+                <button
+                  type="button"
+                  onClick={signIn}
+                  disabled={authLoading}
+                  className="rounded-2xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60"
+                >
+                  Log in
+                </button>
+
+                <button
+                  type="button"
+                  onClick={signUp}
+                  disabled={authLoading}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-60"
+                >
+                  Sign up
+                </button>
+              </div>
+            </div>
+          )}
+
+          {authMessage && (
+            <p className="mt-4 rounded-2xl border border-white/10 bg-[#020617]/70 px-4 py-2.5 text-sm text-slate-300">
+              {authMessage}
+            </p>
+          )}
+        </section>
 
         <section className="mb-6 grid gap-5 rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
           <InputSlider
