@@ -2,7 +2,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 type PlanType = "Recovery" | "Balanced" | "High Output";
 
@@ -914,6 +914,24 @@ function getPriorityTasks(
     });
 }
 
+function getTaskPriorityWithCompletionOrder(
+  tasks: PriorityTask[],
+  completedItems: string[],
+  todayDate: string,
+) {
+  return tasks
+    .map((task, index) => ({
+      task,
+      index,
+      completed: completedItems.includes(getTaskCompletionKey(task, todayDate)),
+    }))
+    .sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+      return a.index - b.index;
+    })
+    .map(({ task }) => task);
+}
+
 function getOverloadWarnings({
   todaySchedule,
   visibleTrainings,
@@ -1140,7 +1158,6 @@ export default function Home() {
   const [cloudMessage, setCloudMessage] = useState("");
 
   const todayDate = getTodayDateString();
-  const inputSectionRef = useRef<HTMLElement | null>(null);
 
   const [hasMounted, setHasMounted] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
@@ -1158,6 +1175,7 @@ export default function Home() {
   );
   const [activeInputTab, setActiveInputTab] = useState<InputTab>("schedule");
   const [isWeeklyOverviewOpen, setIsWeeklyOverviewOpen] = useState(false);
+  const [isInputSectionOpen, setIsInputSectionOpen] = useState(false);
   const [openActionMenuKey, setOpenActionMenuKey] = useState<string | null>(null);
 
   const [completedItems, setCompletedItems] = useState<string[]>([]);
@@ -1519,9 +1537,18 @@ export default function Home() {
     return a.deadline.localeCompare(b.deadline);
   });
 
-  const sortedTrainings = [...visibleTrainings].sort((a, b) =>
-    a.startTime.localeCompare(b.startTime),
-  );
+  const sortedTrainings = [...visibleTrainings].sort((a, b) => {
+    const aCompleted = completedItems.includes(
+      getCompletionKey("training", a.id, a.date),
+    );
+    const bCompleted = completedItems.includes(
+      getCompletionKey("training", b.id, b.date),
+    );
+
+    if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+
+    return a.startTime.localeCompare(b.startTime);
+  });
 
   const upcomingEvents = getUpcomingEvents(events, todayDate);
 
@@ -1538,7 +1565,11 @@ export default function Home() {
     trainings,
   });
 
-  const priorityTasks = getPriorityTasks(focusTasks, todayDate, readinessScore);
+  const priorityTasks = getTaskPriorityWithCompletionOrder(
+    getPriorityTasks(focusTasks, todayDate, readinessScore),
+    completedItems,
+    todayDate,
+  );
 
   const overloadWarnings = getOverloadWarnings({
     todaySchedule,
@@ -1768,9 +1799,22 @@ export default function Home() {
     setCloudLoading(false);
   }
 
-  function scrollToInputSection() {
+  function openInputTab(tab: InputTab) {
+    setActiveInputTab(tab);
+    setIsInputSectionOpen(true);
+  }
+
+  function closeInputModal() {
+    setIsInputSectionOpen(false);
+    setOpenActionMenuKey(null);
+    resetEventForm();
+    resetTaskForm();
+    resetTrainingForm();
+  }
+
+  function scrollToSection(sectionId: string) {
     window.setTimeout(() => {
-      inputSectionRef.current?.scrollIntoView({
+      document.getElementById(sectionId)?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -1904,6 +1948,7 @@ export default function Home() {
     }
 
     resetEventForm();
+    setIsInputSectionOpen(false);
     setConfirmedMessage("");
   }
 
@@ -1925,7 +1970,7 @@ export default function Home() {
     setConfirmedMessage("");
 
     setActiveInputTab("schedule");
-    scrollToInputSection();
+    setIsInputSectionOpen(true);
   }
 
   async function addOrUpdateFocusTask() {
@@ -2006,6 +2051,7 @@ export default function Home() {
     }
 
     resetTaskForm();
+    setIsInputSectionOpen(false);
     setConfirmedMessage("");
   }
 
@@ -2027,7 +2073,7 @@ export default function Home() {
     setConfirmedMessage("");
 
     setActiveInputTab("task");
-    scrollToInputSection();
+    setIsInputSectionOpen(true);
   }
 
   async function addOrUpdateTraining() {
@@ -2113,6 +2159,7 @@ export default function Home() {
     }
 
     resetTrainingForm();
+    setIsInputSectionOpen(false);
     setConfirmedMessage("");
   }
 
@@ -2134,7 +2181,7 @@ export default function Home() {
     setConfirmedMessage("");
 
     setActiveInputTab("training");
-    scrollToInputSection();
+    setIsInputSectionOpen(true);
   }
 
   async function toggleCompletionKey(completionKey: string) {
@@ -2468,37 +2515,44 @@ export default function Home() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <header className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-7 lg:p-8">
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">
-              Life Optimiser
-            </p>
+        <nav className="sticky top-3 z-40 mb-8 rounded-3xl border border-white/10 bg-[#020617]/90 px-4 py-3 shadow-2xl shadow-black/20 backdrop-blur-xl sm:px-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="shrink-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-300">
+                Life Optimiser
+              </p>
+            </div>
 
-            <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center">
-              <div className="text-slate-400 sm:text-right">
-                <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
-                  Cloud Account
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <button
+                type="button"
+                onClick={() => openInputTab("schedule")}
+                className="rounded-2xl bg-cyan-300 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-400/10 transition hover:bg-cyan-200"
+              >
+                + Add Item
+              </button>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-left sm:text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
+                  {cloudLoading ? "Syncing" : "Cloud synced"}
                 </p>
-                <p className="mt-1">
-                  Signed in as <span className="font-medium text-white">{user.email}</span>
+                <p className="mt-1 max-w-[220px] truncate text-xs font-medium text-slate-200">
+                  {user.email}
                 </p>
-                {(cloudMessage || cloudLoading) && (
-                  <p className="mt-1 text-xs text-slate-500">
-                    {cloudLoading ? "Syncing with Supabase..." : cloudMessage}
-                  </p>
-                )}
               </div>
 
               <button
                 type="button"
                 onClick={signOut}
-                className="w-fit rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
               >
                 Log out
               </button>
             </div>
           </div>
+        </nav>
 
+        <header className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-7 lg:p-8">
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <div>
               {currentDateLabel && (
@@ -2567,6 +2621,9 @@ export default function Home() {
           </div>
         </header>
 
+
+
+
         <section className="mb-6 grid gap-5 rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
           <InputSlider
             label="Sleep"
@@ -2606,12 +2663,456 @@ export default function Home() {
           />
         </section>
 
-        <section
-          ref={inputSectionRef}
-          className="scroll-mt-6 mb-8 rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-5"
-        >
-          <div className="mx-auto max-w-5xl">
-            <div className="mb-5 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-[#020617]/80 p-2">
+        <section className="mb-8 grid gap-6 lg:grid-cols-12">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:col-span-12">
+            <button
+              type="button"
+              onClick={() => setIsWeeklyOverviewOpen((current) => !current)}
+              className="flex w-full items-center justify-between gap-4 text-left"
+            >
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+                  Weekly Overview
+                </p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
+                  <h2 className="text-2xl font-semibold">Weekly Load</h2>
+                  <p className="text-sm text-slate-400">
+                    {weeklyOverview.reduce((total, day) => total + day.itemCount, 0)} items across the next 7 days
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="hidden rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 sm:inline-flex">
+                  Next 7 days
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold text-slate-300 transition hover:bg-white/10">
+                  {isWeeklyOverviewOpen ? "Hide" : "Show"}
+                </span>
+              </div>
+            </button>
+
+            {isWeeklyOverviewOpen && (
+              <div className="mt-6 grid gap-3 sm:grid-cols-7">
+                {weeklyOverview.map((day) => {
+                  const loadPercentage = Math.max(
+                    6,
+                    Math.round((day.scheduledMinutes / 1440) * 100),
+                  );
+
+                  return (
+                    <div
+                      key={day.date}
+                      className={getWeeklyLoadCardClass(day.loadLevel)}
+                    >
+                      <div className="mb-3">
+                        <p className="text-sm font-semibold text-white">
+                          {day.dayLabel}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {day.displayDate}
+                        </p>
+                      </div>
+
+                      <div className="flex h-24 items-end rounded-xl bg-white/5 p-1">
+                        <div
+                          className={getWeeklyLoadBarClass(day.loadLevel)}
+                          style={{ height: `${loadPercentage}%` }}
+                        />
+                      </div>
+
+                      <div className="mt-3 space-y-1 text-xs text-slate-400">
+                        <p>{formatLoadFractionFromMinutes(day.scheduledMinutes)} planned</p>
+                        <p>{day.itemCount} items</p>
+                        <p className={getLoadTextClass(day.loadLevel)}>
+                          {day.loadLevel}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+
+        <section className="mb-8 grid gap-6 lg:grid-cols-12">
+          <div id="today-plan" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+                  Schedule
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">Today’s Plan</h2>
+              </div>
+              <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
+                {hasMounted
+                  ? `${completedScheduleCount}/${todaySchedule.length} complete`
+                  : "Loading plan"}
+              </span>
+            </div>
+
+            <p className="mb-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
+              {hasMounted ? progressMessage : "Loading today’s plan..."}
+            </p>
+
+            <div className="space-y-4">
+              {todaySchedule.map((item) => (
+                <div
+                  key={`${item.source}-${item.id}`}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setOpenActionMenuKey(
+                      openActionMenuKey === `timeline-${item.source}-${item.id}`
+                        ? null
+                        : `timeline-${item.source}-${item.id}`,
+                    );
+                  }}
+                  className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-5 transition ${
+                    item.completed ? "opacity-60" : ""
+                  }`}
+                >
+                  <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-cyan-300 to-violet-400" />
+                  <div className="flex flex-col gap-4 pl-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-mono text-sm text-cyan-200">
+                        {getTimelineTimeText(item)}
+                      </p>
+                      <h3
+                        className={`mt-2 text-lg font-medium ${
+                          item.completed
+                            ? "line-through decoration-cyan-300/70"
+                            : ""
+                        }`}
+                      >
+                        {item.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {item.category}
+                      </p>
+                    </div>
+
+
+                    <MobileActionButton
+                      isOpen={openActionMenuKey === `timeline-${item.source}-${item.id}`}
+                      onClick={() =>
+                        setOpenActionMenuKey(
+                          openActionMenuKey === `timeline-${item.source}-${item.id}`
+                            ? null
+                            : `timeline-${item.source}-${item.id}`,
+                        )
+                      }
+                    />
+
+                    <ContextActions
+                      isOpen={openActionMenuKey === `timeline-${item.source}-${item.id}`}
+                      completed={item.completed}
+                      onToggle={() => toggleTimelineCompletion(item)}
+                      onEdit={() => {
+                        if (item.source === "task") startEditingTask(item.id);
+                        if (item.source === "event") startEditingEvent(item.id);
+                        if (item.source === "training") startEditingTraining(item.id);
+                      }}
+                      onRemove={() => removeTimelineItem(item)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {todaySchedule.length === 0 && (
+                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
+                  No schedule items for today.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div id="ranked-tasks" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-violet-300">
+              Focus
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Ranked Tasks</h2>
+
+            <ol className="mt-6 space-y-3">
+              {priorityTasks.map((task, index) => {
+                const taskCompletionKey = getTaskCompletionKey(task, todayDate);
+                const taskCompleted =
+                  completedItems.includes(taskCompletionKey);
+
+                return (
+                  <li
+                    key={task.id}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      setOpenActionMenuKey(
+                        openActionMenuKey === `task-${task.id}`
+                          ? null
+                          : `task-${task.id}`,
+                      );
+                    }}
+                    className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4 transition ${
+                      taskCompleted ? "opacity-60" : ""
+                    }`}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-950">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p
+                            className={`font-medium ${
+                              taskCompleted
+                                ? "line-through decoration-violet-300/70"
+                                : ""
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+                          <p
+                            className={`mt-1 text-xs text-slate-500 ${
+                              taskCompleted ? "line-through" : ""
+                            }`}
+                          >
+                            {task.deadline ? `Due ${task.deadline}` : "No deadline"}
+                            {task.startTime && task.endTime
+                              ? ` · ${task.plannedDate} · ${task.startTime} - ${task.endTime}`
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      <MobileActionButton
+                        isOpen={openActionMenuKey === `task-${task.id}`}
+                        onClick={() =>
+                          setOpenActionMenuKey(
+                            openActionMenuKey === `task-${task.id}`
+                              ? null
+                              : `task-${task.id}`,
+                          )
+                        }
+                      />
+
+                      <ContextActions
+                        isOpen={openActionMenuKey === `task-${task.id}`}
+                        completed={taskCompleted}
+                        onToggle={() => toggleCompletionKey(taskCompletionKey)}
+                        onEdit={() => startEditingTask(task.id)}
+                        onRemove={() => removeFocusTask(task.id)}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+
+          <div id="performance-plan" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
+            <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
+              Training
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Performance Plan</h2>
+
+            <div className="mt-6 space-y-4">
+              {sortedTrainings.map((training) => {
+                const trainingCompletionKey = getCompletionKey(
+                  "training",
+                  training.id,
+                  training.date,
+                );
+                const trainingCompleted = completedItems.includes(
+                  trainingCompletionKey,
+                );
+
+                return (
+                  <div
+                    key={training.id}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      setOpenActionMenuKey(
+                        openActionMenuKey === `training-${training.id}`
+                          ? null
+                          : `training-${training.id}`,
+                      );
+                    }}
+                    className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4 transition ${
+                      trainingCompleted ? "opacity-60" : ""
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-mono text-sm text-emerald-300">
+                          {training.startTime} - {training.endTime}
+                        </p>
+                        <h3
+                          className={`mt-2 font-medium ${
+                            trainingCompleted
+                              ? "line-through decoration-emerald-300/70"
+                              : ""
+                          }`}
+                        >
+                          {training.sport}: {training.session}
+                        </h3>
+                        <p
+                          className={`mt-1 text-sm text-slate-500 ${
+                            trainingCompleted ? "line-through" : ""
+                          }`}
+                        >
+                          {calculateDuration(
+                            training.startTime,
+                            training.endTime,
+                          )}{" "}
+                          min · {training.intensity} intensity
+                          {getTrainingDistanceText(training)
+                            ? ` · ${getTrainingDistanceText(training)}`
+                            : ""}
+                        </p>
+                      </div>
+
+                      <MobileActionButton
+                        isOpen={openActionMenuKey === `training-${training.id}`}
+                        onClick={() =>
+                          setOpenActionMenuKey(
+                            openActionMenuKey === `training-${training.id}`
+                              ? null
+                              : `training-${training.id}`,
+                          )
+                        }
+                      />
+
+                      <ContextActions
+                        isOpen={openActionMenuKey === `training-${training.id}`}
+                        completed={trainingCompleted}
+                        onToggle={() => toggleCompletionKey(trainingCompletionKey)}
+                        onEdit={() => startEditingTraining(training.id)}
+                        onRemove={() => removeTraining(training.id)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {sortedTrainings.length === 0 && (
+                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
+                  No training added for today.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
+              Calendar
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Upcoming Events</h2>
+
+            <div className="mt-6 space-y-4">
+              {upcomingEvents.map((event) => (
+                <div
+                  key={`${event.eventId}-${event.occurrenceDate}`}
+                  onContextMenu={(menuEvent) => {
+                    menuEvent.preventDefault();
+                    setOpenActionMenuKey(
+                      openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`
+                        ? null
+                        : `upcoming-${event.eventId}-${event.occurrenceDate}`,
+                    );
+                  }}
+                  className="relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-mono text-sm text-blue-300">
+                        {event.occurrenceDate} · {event.startTime} -{" "}
+                        {event.endTime}
+                      </p>
+                      <h3 className="mt-2 font-medium">{event.title}</h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {event.category} · {event.repeat}
+                      </p>
+                    </div>
+
+                    <MobileActionButton
+                      isOpen={openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`}
+                      onClick={() =>
+                        setOpenActionMenuKey(
+                          openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`
+                            ? null
+                            : `upcoming-${event.eventId}-${event.occurrenceDate}`,
+                        )
+                      }
+                    />
+
+                    <ContextActions
+                      isOpen={openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`}
+                      completed={false}
+                      onEdit={() => startEditingEvent(event.eventId)}
+                      onRemove={() => removeEvent(event.eventId)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {upcomingEvents.length === 0 && (
+                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
+                  No notable upcoming events.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/10 via-white/[0.06] to-violet-400/10 p-6 shadow-2xl backdrop-blur-xl lg:col-span-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+              Assistant
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Recommendation</h2>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-[#020617]/70 p-5">
+              <p className="leading-7 text-slate-300">{recommendation}</p>
+            </div>
+
+
+            <button
+              onClick={clearSavedData}
+              className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+            >
+              Reset Saved Data
+            </button>
+
+          </div>
+        </section>
+
+
+
+
+        {isInputSectionOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
+            onClick={closeInputModal}
+          >
+            <div
+              className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-white/10 bg-[#020617] p-4 shadow-2xl shadow-black/40 sm:p-5"
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+            <div className="mx-auto max-w-5xl">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">Quick Add</p>
+                  <h2 className="mt-2 text-2xl font-semibold">Add to your plan</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeInputModal}
+                  className="w-fit rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mb-5 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-[#020617]/80 p-2">
               <TabButton
                 label="Schedule"
                 active={activeInputTab === "schedule"}
@@ -2898,426 +3399,11 @@ export default function Home() {
               )}
             </div>
           </div>
-        </section>
 
-        <section className="mb-6 grid gap-6 lg:grid-cols-12">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:col-span-12">
-            <button
-              type="button"
-              onClick={() => setIsWeeklyOverviewOpen((current) => !current)}
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                  Weekly Overview
-                </p>
-                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
-                  <h2 className="text-2xl font-semibold">Weekly Load</h2>
-                  <p className="text-sm text-slate-400">
-                    {weeklyOverview.reduce((total, day) => total + day.itemCount, 0)} items across the next 7 days
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="hidden rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 sm:inline-flex">
-                  Next 7 days
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold text-slate-300 transition hover:bg-white/10">
-                  {isWeeklyOverviewOpen ? "Hide" : "Show"}
-                </span>
-              </div>
-            </button>
-
-            {isWeeklyOverviewOpen && (
-              <div className="mt-6 grid gap-3 sm:grid-cols-7">
-                {weeklyOverview.map((day) => {
-                  const loadPercentage = Math.max(
-                    6,
-                    Math.round((day.scheduledMinutes / 1440) * 100),
-                  );
-
-                  return (
-                    <div
-                      key={day.date}
-                      className={getWeeklyLoadCardClass(day.loadLevel)}
-                    >
-                      <div className="mb-3">
-                        <p className="text-sm font-semibold text-white">
-                          {day.dayLabel}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {day.displayDate}
-                        </p>
-                      </div>
-
-                      <div className="flex h-24 items-end rounded-xl bg-white/5 p-1">
-                        <div
-                          className={getWeeklyLoadBarClass(day.loadLevel)}
-                          style={{ height: `${loadPercentage}%` }}
-                        />
-                      </div>
-
-                      <div className="mt-3 space-y-1 text-xs text-slate-400">
-                        <p>{formatLoadFractionFromMinutes(day.scheduledMinutes)} planned</p>
-                        <p>{day.itemCount} items</p>
-                        <p className={getLoadTextClass(day.loadLevel)}>
-                          {day.loadLevel}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-12">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                  Schedule
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">Today’s Plan</h2>
-              </div>
-              <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
-                {hasMounted
-                  ? `${completedScheduleCount}/${todaySchedule.length} complete`
-                  : "Loading plan"}
-              </span>
-            </div>
-
-            <p className="mb-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
-              {hasMounted ? progressMessage : "Loading today’s plan..."}
-            </p>
-
-            <div className="space-y-4">
-              {todaySchedule.map((item) => (
-                <div
-                  key={`${item.source}-${item.id}`}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    setOpenActionMenuKey(
-                      openActionMenuKey === `timeline-${item.source}-${item.id}`
-                        ? null
-                        : `timeline-${item.source}-${item.id}`,
-                    );
-                  }}
-                  className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-5 transition ${
-                    item.completed ? "opacity-60" : ""
-                  }`}
-                >
-                  <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-cyan-300 to-violet-400" />
-                  <div className="flex flex-col gap-4 pl-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="font-mono text-sm text-cyan-200">
-                        {getTimelineTimeText(item)}
-                      </p>
-                      <h3
-                        className={`mt-2 text-lg font-medium ${
-                          item.completed
-                            ? "line-through decoration-cyan-300/70"
-                            : ""
-                        }`}
-                      >
-                        {item.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {item.category}
-                      </p>
-                    </div>
-
-
-                    <MobileActionButton
-                      isOpen={openActionMenuKey === `timeline-${item.source}-${item.id}`}
-                      onClick={() =>
-                        setOpenActionMenuKey(
-                          openActionMenuKey === `timeline-${item.source}-${item.id}`
-                            ? null
-                            : `timeline-${item.source}-${item.id}`,
-                        )
-                      }
-                    />
-
-                    <ContextActions
-                      isOpen={openActionMenuKey === `timeline-${item.source}-${item.id}`}
-                      completed={item.completed}
-                      onToggle={() => toggleTimelineCompletion(item)}
-                      onEdit={() => {
-                        if (item.source === "task") startEditingTask(item.id);
-                        if (item.source === "event") startEditingEvent(item.id);
-                        if (item.source === "training") startEditingTraining(item.id);
-                      }}
-                      onRemove={() => removeTimelineItem(item)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {todaySchedule.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
-                  No schedule items for today.
-                </p>
-              )}
             </div>
           </div>
+        )}
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-violet-300">
-              Focus
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">Ranked Tasks</h2>
-
-            <ol className="mt-6 space-y-3">
-              {priorityTasks.map((task, index) => {
-                const taskCompletionKey = getTaskCompletionKey(task, todayDate);
-                const taskCompleted =
-                  completedItems.includes(taskCompletionKey);
-
-                return (
-                  <li
-                    key={task.id}
-                    onContextMenu={(event) => {
-                      event.preventDefault();
-                      setOpenActionMenuKey(
-                        openActionMenuKey === `task-${task.id}`
-                          ? null
-                          : `task-${task.id}`,
-                      );
-                    }}
-                    className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4 transition ${
-                      taskCompleted ? "opacity-60" : ""
-                    }`}
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-950">
-                          {index + 1}
-                        </span>
-                        <div>
-                          <p
-                            className={`font-medium ${
-                              taskCompleted
-                                ? "line-through decoration-violet-300/70"
-                                : ""
-                            }`}
-                          >
-                            {task.title}
-                          </p>
-                          <p
-                            className={`mt-1 text-xs text-slate-500 ${
-                              taskCompleted ? "line-through" : ""
-                            }`}
-                          >
-                            {task.deadline ? `Due ${task.deadline}` : "No deadline"}
-                            {task.startTime && task.endTime
-                              ? ` · ${task.plannedDate} · ${task.startTime} - ${task.endTime}`
-                              : ""}
-                          </p>
-                        </div>
-                      </div>
-
-                      <MobileActionButton
-                        isOpen={openActionMenuKey === `task-${task.id}`}
-                        onClick={() =>
-                          setOpenActionMenuKey(
-                            openActionMenuKey === `task-${task.id}`
-                              ? null
-                              : `task-${task.id}`,
-                          )
-                        }
-                      />
-
-                      <ContextActions
-                        isOpen={openActionMenuKey === `task-${task.id}`}
-                        completed={taskCompleted}
-                        onToggle={() => toggleCompletionKey(taskCompletionKey)}
-                        onEdit={() => startEditingTask(task.id)}
-                        onRemove={() => removeFocusTask(task.id)}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
-            <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
-              Training
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">Performance Plan</h2>
-
-            <div className="mt-6 space-y-4">
-              {sortedTrainings.map((training) => {
-                const trainingCompletionKey = getCompletionKey(
-                  "training",
-                  training.id,
-                  training.date,
-                );
-                const trainingCompleted = completedItems.includes(
-                  trainingCompletionKey,
-                );
-
-                return (
-                  <div
-                    key={training.id}
-                    onContextMenu={(event) => {
-                      event.preventDefault();
-                      setOpenActionMenuKey(
-                        openActionMenuKey === `training-${training.id}`
-                          ? null
-                          : `training-${training.id}`,
-                      );
-                    }}
-                    className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4 transition ${
-                      trainingCompleted ? "opacity-60" : ""
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-mono text-sm text-emerald-300">
-                          {training.startTime} - {training.endTime}
-                        </p>
-                        <h3
-                          className={`mt-2 font-medium ${
-                            trainingCompleted
-                              ? "line-through decoration-emerald-300/70"
-                              : ""
-                          }`}
-                        >
-                          {training.sport}: {training.session}
-                        </h3>
-                        <p
-                          className={`mt-1 text-sm text-slate-500 ${
-                            trainingCompleted ? "line-through" : ""
-                          }`}
-                        >
-                          {calculateDuration(
-                            training.startTime,
-                            training.endTime,
-                          )}{" "}
-                          min · {training.intensity} intensity
-                          {getTrainingDistanceText(training)
-                            ? ` · ${getTrainingDistanceText(training)}`
-                            : ""}
-                        </p>
-                      </div>
-
-                      <MobileActionButton
-                        isOpen={openActionMenuKey === `training-${training.id}`}
-                        onClick={() =>
-                          setOpenActionMenuKey(
-                            openActionMenuKey === `training-${training.id}`
-                              ? null
-                              : `training-${training.id}`,
-                          )
-                        }
-                      />
-
-                      <ContextActions
-                        isOpen={openActionMenuKey === `training-${training.id}`}
-                        completed={trainingCompleted}
-                        onToggle={() => toggleCompletionKey(trainingCompletionKey)}
-                        onEdit={() => startEditingTraining(training.id)}
-                        onRemove={() => removeTraining(training.id)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {sortedTrainings.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
-                  No training added for today.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
-              Calendar
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">Upcoming Events</h2>
-
-            <div className="mt-6 space-y-4">
-              {upcomingEvents.map((event) => (
-                <div
-                  key={`${event.eventId}-${event.occurrenceDate}`}
-                  onContextMenu={(menuEvent) => {
-                    menuEvent.preventDefault();
-                    setOpenActionMenuKey(
-                      openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`
-                        ? null
-                        : `upcoming-${event.eventId}-${event.occurrenceDate}`,
-                    );
-                  }}
-                  className="relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-mono text-sm text-blue-300">
-                        {event.occurrenceDate} · {event.startTime} -{" "}
-                        {event.endTime}
-                      </p>
-                      <h3 className="mt-2 font-medium">{event.title}</h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {event.category} · {event.repeat}
-                      </p>
-                    </div>
-
-                    <MobileActionButton
-                      isOpen={openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`}
-                      onClick={() =>
-                        setOpenActionMenuKey(
-                          openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`
-                            ? null
-                            : `upcoming-${event.eventId}-${event.occurrenceDate}`,
-                        )
-                      }
-                    />
-
-                    <ContextActions
-                      isOpen={openActionMenuKey === `upcoming-${event.eventId}-${event.occurrenceDate}`}
-                      completed={false}
-                      onEdit={() => startEditingEvent(event.eventId)}
-                      onRemove={() => removeEvent(event.eventId)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {upcomingEvents.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
-                  No notable upcoming events.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/10 via-white/[0.06] to-violet-400/10 p-6 shadow-2xl backdrop-blur-xl lg:col-span-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-              Assistant
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">Recommendation</h2>
-
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[#020617]/70 p-5">
-              <p className="leading-7 text-slate-300">{recommendation}</p>
-            </div>
-
-
-            <button
-              onClick={clearSavedData}
-              className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
-            >
-              Reset Saved Data
-            </button>
-
-          </div>
-        </section>
       </div>
     </main>
   );
