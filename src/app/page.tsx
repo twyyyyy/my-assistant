@@ -507,26 +507,26 @@ function getTaskCompletionKey(task: FocusTask, todayDate: string) {
 
 function getWeeklyLoadBarClass(loadLevel: WeeklyLoadDay["loadLevel"]) {
   if (loadLevel === "Heavy") {
-    return "w-full rounded-lg bg-gradient-to-t from-red-400 via-orange-300 to-amber-200 transition-all";
+    return "w-full rounded-lg bg-gradient-to-t from-rose-400 via-pink-300 to-orange-200 transition-all";
   }
 
   if (loadLevel === "Moderate") {
-    return "w-full rounded-lg bg-gradient-to-t from-blue-400 via-sky-300 to-violet-300 transition-all";
+    return "w-full rounded-lg bg-gradient-to-t from-fuchsia-300 via-violet-300 to-cyan-100 transition-all";
   }
 
-  return "w-full rounded-lg bg-gradient-to-t from-emerald-400 via-teal-300 to-cyan-200 transition-all";
+  return "w-full rounded-lg bg-gradient-to-t from-emerald-300 via-teal-200 to-cyan-100 transition-all";
 }
 
 function getWeeklyLoadCardClass(loadLevel: WeeklyLoadDay["loadLevel"]) {
   if (loadLevel === "Heavy") {
-    return "rounded-2xl border border-red-300/20 bg-red-300/5 p-3";
+    return "rounded-2xl border border-rose-300/20 bg-rose-300/5 p-3";
   }
 
   if (loadLevel === "Moderate") {
-    return "rounded-2xl border border-blue-300/20 bg-blue-300/5 p-3";
+    return "rounded-2xl border border-pink-300/20 bg-pink-300/5 p-3";
   }
 
-  return "rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-3";
+  return "rounded-2xl border border-cyan-200/20 bg-cyan-200/5 p-3";
 }
 
 function getLoadLevelFromHours(hours: number): WeeklyLoadDay["loadLevel"] {
@@ -542,9 +542,9 @@ function formatLoadFractionFromMinutes(minutes: number) {
 }
 
 function getLoadTextClass(loadLevel: WeeklyLoadDay["loadLevel"]) {
-  if (loadLevel === "Heavy") return "text-red-300";
-  if (loadLevel === "Moderate") return "text-amber-300";
-  return "text-emerald-300";
+  if (loadLevel === "Heavy") return "text-rose-300";
+  if (loadLevel === "Moderate") return "text-pink-200";
+  return "text-cyan-100";
 }
 
 function pickBrief(briefs: string[], seed: number) {
@@ -2507,18 +2507,18 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#030712] text-white">
+    <main className="min-h-screen overflow-hidden bg-[#080611] text-white">
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-[-10%] top-[-10%] h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute right-[-10%] top-[20%] h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[30%] h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute left-[-10%] top-[-10%] h-96 w-96 rounded-full bg-pink-300/20 blur-3xl" />
+        <div className="absolute right-[-10%] top-[20%] h-96 w-96 rounded-full bg-violet-300/20 blur-3xl" />
+        <div className="absolute bottom-[-20%] left-[30%] h-96 w-96 rounded-full bg-pink-200/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <nav className="sticky top-3 z-40 mb-8 rounded-3xl border border-white/10 bg-[#020617]/90 px-4 py-3 shadow-2xl shadow-black/20 backdrop-blur-xl sm:px-5">
+        <nav className="sticky top-3 z-40 mb-8 rounded-3xl border border-pink-100/10 bg-[#120B18]/90 px-4 py-3 shadow-2xl shadow-pink-950/20 backdrop-blur-xl sm:px-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="shrink-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-pink-200">
                 Life Optimiser
               </p>
             </div>
@@ -2527,12 +2527,12 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => openInputTab("schedule")}
-                className="rounded-2xl bg-cyan-300 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-400/10 transition hover:bg-cyan-200"
+                className="rounded-2xl bg-gradient-to-r from-pink-300 via-fuchsia-300 to-violet-300 px-5 py-2.5 text-sm font-semibold text-[#160A18] shadow-lg shadow-pink-400/20 transition hover:scale-[1.02] hover:shadow-pink-300/30"
               >
                 + Add Item
               </button>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-left sm:text-right">
+              <div className="rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-2 text-left sm:text-right">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
                   {cloudLoading ? "Syncing" : "Cloud synced"}
                 </p>
@@ -2544,7 +2544,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={signOut}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+                className="rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
               >
                 Log out
               </button>
@@ -2552,7 +2552,7 @@ export default function Home() {
           </div>
         </nav>
 
-        <header className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-7 lg:p-8">
+        <header className="mb-8 overflow-hidden rounded-[2rem] border border-pink-100/10 bg-white/[0.055] p-5 shadow-2xl shadow-pink-950/20 backdrop-blur-xl sm:p-7 lg:p-8">
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <div>
               {currentDateLabel && (
@@ -2568,35 +2568,35 @@ export default function Home() {
 
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl">
                 Plan your day,{" "}
-                <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-violet-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-pink-200 via-fuchsia-300 to-violet-200 bg-clip-text text-transparent">
                   Mabel.
                 </span>
               </h1>
-              <p className="mt-5 max-w-3xl text-lg font-medium leading-8 text-cyan-100">
+              <p className="mt-5 max-w-3xl text-lg font-medium leading-8 text-pink-50">
                 {todayBrief}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="rounded-3xl border border-white/10 bg-[#0b1120]/90 p-5 shadow-xl shadow-black/20 backdrop-blur-xl sm:col-span-2 lg:col-span-1">
+              <div className="rounded-3xl border border-pink-100/10 bg-[#171024]/90 p-5 shadow-xl shadow-pink-950/20 backdrop-blur-xl sm:col-span-2 lg:col-span-1">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm text-slate-400">Readiness</p>
                     <p className="mt-2 font-mono text-5xl font-semibold">{readinessScore}</p>
                   </div>
-                  <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300">
+                  <span className="rounded-full border border-pink-300/25 bg-pink-300/10 px-3 py-1 text-sm text-pink-200">
                     {planType}
                   </span>
                 </div>
                 <div className="mt-5 h-2 rounded-full bg-white/10">
                   <div
-                    className="h-2 rounded-full bg-gradient-to-r from-cyan-300 to-violet-400 transition-all duration-500"
+                    className="h-2 rounded-full bg-gradient-to-r from-pink-300 to-violet-300 transition-all duration-500"
                     style={{ width: `${readinessScore}%` }}
                   />
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-[#020617]/70 p-5">
+              <div className="rounded-3xl border border-pink-100/10 bg-[#120B18]/75 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm text-slate-400">Daily load</p>
@@ -2604,7 +2604,7 @@ export default function Home() {
                       {todayLoadFraction}
                     </p>
                   </div>
-                  <span className={`rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium ${getLoadTextClass(todayLoadLevel)}`}>
+                  <span className={`rounded-full border border-pink-100/10 bg-white/5 px-3 py-1 text-xs font-medium ${getLoadTextClass(todayLoadLevel)}`}>
                     {todayLoadLevel}
                   </span>
                 </div>
@@ -2624,7 +2624,7 @@ export default function Home() {
 
 
 
-        <section className="mb-6 grid gap-5 rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mb-6 grid gap-5 rounded-3xl border border-pink-100/10 bg-white/[0.065] p-5 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
           <InputSlider
             label="Sleep"
             value={sleepHours}
@@ -2664,14 +2664,14 @@ export default function Home() {
         </section>
 
         <section className="mb-8 grid gap-6 lg:grid-cols-12">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:col-span-12">
+          <div className="rounded-3xl border border-pink-100/10 bg-white/[0.065] p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:col-span-12">
             <button
               type="button"
               onClick={() => setIsWeeklyOverviewOpen((current) => !current)}
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+                <p className="text-xs uppercase tracking-[0.3em] text-pink-200">
                   Weekly Overview
                 </p>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
@@ -2686,7 +2686,7 @@ export default function Home() {
                 <span className="hidden rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 sm:inline-flex">
                   Next 7 days
                 </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold text-slate-300 transition hover:bg-white/10">
+                <span className="rounded-full border border-pink-100/10 bg-white/5 px-3 py-1 text-sm font-semibold text-slate-300 transition hover:bg-white/10">
                   {isWeeklyOverviewOpen ? "Hide" : "Show"}
                 </span>
               </div>
@@ -2738,10 +2738,10 @@ export default function Home() {
 
 
         <section className="mb-8 grid gap-6 lg:grid-cols-12">
-          <div id="today-plan" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
+          <div id="today-plan" className="scroll-mt-24 rounded-3xl border border-pink-100/10 bg-white/[0.065] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+                <p className="text-xs uppercase tracking-[0.3em] text-pink-200">
                   Schedule
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">Today’s Plan</h2>
@@ -2753,7 +2753,7 @@ export default function Home() {
               </span>
             </div>
 
-            <p className="mb-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
+            <p className="mb-5 rounded-2xl border border-pink-300/20 bg-pink-300/10 px-4 py-3 text-sm text-pink-50">
               {hasMounted ? progressMessage : "Loading today’s plan..."}
             </p>
 
@@ -2769,20 +2769,20 @@ export default function Home() {
                         : `timeline-${item.source}-${item.id}`,
                     );
                   }}
-                  className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-5 transition ${
+                  className={`relative rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-5 transition ${
                     item.completed ? "opacity-60" : ""
                   }`}
                 >
-                  <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-cyan-300 to-violet-400" />
+                  <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-pink-300 to-violet-300" />
                   <div className="flex flex-col gap-4 pl-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="font-mono text-sm text-cyan-200">
+                      <p className="font-mono text-sm text-pink-200">
                         {getTimelineTimeText(item)}
                       </p>
                       <h3
                         className={`mt-2 text-lg font-medium ${
                           item.completed
-                            ? "line-through decoration-cyan-300/70"
+                            ? "line-through decoration-pink-300/70"
                             : ""
                         }`}
                       >
@@ -2821,15 +2821,15 @@ export default function Home() {
               ))}
 
               {todaySchedule.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
+                <p className="rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-4 text-sm text-slate-500">
                   No schedule items for today.
                 </p>
               )}
             </div>
           </div>
 
-          <div id="ranked-tasks" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-violet-300">
+          <div id="ranked-tasks" className="scroll-mt-24 rounded-3xl border border-pink-100/10 bg-white/[0.065] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-fuchsia-200">
               Focus
             </p>
             <h2 className="mt-2 text-2xl font-semibold">Ranked Tasks</h2>
@@ -2851,7 +2851,7 @@ export default function Home() {
                           : `task-${task.id}`,
                       );
                     }}
-                    className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4 transition ${
+                    className={`relative rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-4 transition ${
                       taskCompleted ? "opacity-60" : ""
                     }`}
                   >
@@ -2864,7 +2864,7 @@ export default function Home() {
                           <p
                             className={`font-medium ${
                               taskCompleted
-                                ? "line-through decoration-violet-300/70"
+                                ? "line-through decoration-fuchsia-300/70"
                                 : ""
                             }`}
                           >
@@ -2908,7 +2908,7 @@ export default function Home() {
             </ol>
           </div>
 
-          <div id="performance-plan" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
+          <div id="performance-plan" className="scroll-mt-24 rounded-3xl border border-pink-100/10 bg-white/[0.065] p-6 shadow-2xl backdrop-blur-xl lg:col-span-7">
             <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
               Training
             </p>
@@ -2936,7 +2936,7 @@ export default function Home() {
                           : `training-${training.id}`,
                       );
                     }}
-                    className={`relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4 transition ${
+                    className={`relative rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-4 transition ${
                       trainingCompleted ? "opacity-60" : ""
                     }`}
                   >
@@ -2994,15 +2994,15 @@ export default function Home() {
               })}
 
               {sortedTrainings.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
+                <p className="rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-4 text-sm text-slate-500">
                   No training added for today.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
+          <div className="rounded-3xl border border-pink-100/10 bg-white/[0.065] p-6 shadow-2xl backdrop-blur-xl lg:col-span-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-violet-200">
               Calendar
             </p>
             <h2 className="mt-2 text-2xl font-semibold">Upcoming Events</h2>
@@ -3019,11 +3019,11 @@ export default function Home() {
                         : `upcoming-${event.eventId}-${event.occurrenceDate}`,
                     );
                   }}
-                  className="relative rounded-2xl border border-white/10 bg-[#020617]/70 p-4"
+                  className="relative rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-4"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-mono text-sm text-blue-300">
+                      <p className="font-mono text-sm text-violet-200">
                         {event.occurrenceDate} · {event.startTime} -{" "}
                         {event.endTime}
                       </p>
@@ -3055,27 +3055,27 @@ export default function Home() {
               ))}
 
               {upcomingEvents.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-[#020617]/70 p-4 text-sm text-slate-500">
+                <p className="rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-4 text-sm text-slate-500">
                   No notable upcoming events.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/10 via-white/[0.06] to-violet-400/10 p-6 shadow-2xl backdrop-blur-xl lg:col-span-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+          <div className="rounded-3xl border border-pink-300/20 bg-gradient-to-br from-pink-300/10 via-white/[0.06] to-violet-300/10 p-6 shadow-2xl backdrop-blur-xl lg:col-span-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-pink-200">
               Assistant
             </p>
             <h2 className="mt-2 text-2xl font-semibold">Recommendation</h2>
 
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[#020617]/70 p-5">
+            <div className="mt-6 rounded-2xl border border-pink-100/10 bg-[#120B18]/75 p-5">
               <p className="leading-7 text-slate-300">{recommendation}</p>
             </div>
 
 
             <button
               onClick={clearSavedData}
-              className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+              className="mt-6 w-full rounded-2xl border border-pink-100/10 bg-white/5 px-5 py-4 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
             >
               Reset Saved Data
             </button>
@@ -3092,7 +3092,7 @@ export default function Home() {
             onClick={closeInputModal}
           >
             <div
-              className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-white/10 bg-[#020617] p-4 shadow-2xl shadow-black/40 sm:p-5"
+              className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-pink-100/10 bg-[#120B18] p-4 shadow-2xl shadow-pink-950/40 sm:p-5"
               onClick={(event) => event.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -3100,19 +3100,19 @@ export default function Home() {
             <div className="mx-auto max-w-5xl">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">Quick Add</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-pink-200">Quick Add</p>
                   <h2 className="mt-2 text-2xl font-semibold">Add to your plan</h2>
                 </div>
                 <button
                   type="button"
                   onClick={closeInputModal}
-                  className="w-fit rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                  className="w-fit rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
                 >
                   Close
                 </button>
               </div>
 
-              <div className="mb-5 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-[#020617]/80 p-2">
+              <div className="mb-5 grid grid-cols-3 gap-2 rounded-2xl border border-pink-100/10 bg-[#120B18]/80 p-2">
               <TabButton
                 label="Schedule"
                 active={activeInputTab === "schedule"}
@@ -3130,7 +3130,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-[#0b1120]/90 p-5 shadow-xl shadow-black/20 backdrop-blur-xl sm:p-6">
+            <div className="rounded-3xl border border-pink-100/10 bg-[#171024]/90 p-5 shadow-xl shadow-pink-950/20 backdrop-blur-xl sm:p-6">
               {activeInputTab === "schedule" && (
                 <CompactPanel
                   title={editingEventId ? "Edit Schedule Event" : "Add Schedule Event"}
@@ -3205,7 +3205,7 @@ export default function Home() {
 
                     <button
                       onClick={addOrUpdateEvent}
-                      className="rounded-2xl bg-cyan-300 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-cyan-200"
+                      className="rounded-2xl bg-gradient-to-r from-pink-300 via-fuchsia-300 to-violet-300 px-4 py-2.5 font-semibold text-[#160A18] shadow-lg shadow-pink-400/20 transition hover:scale-[1.02]"
                     >
                       {editingEventId ? "Update Event" : "Add Event"}
                     </button>
@@ -3213,7 +3213,7 @@ export default function Home() {
                     {editingEventId && (
                       <button
                         onClick={resetEventForm}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300 md:col-span-2"
+                        className="rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-2.5 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300 md:col-span-2"
                       >
                         Cancel Edit
                       </button>
@@ -3289,7 +3289,7 @@ export default function Home() {
                     {editingTaskId && (
                       <button
                         onClick={resetTaskForm}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300 md:col-span-2"
+                        className="rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-2.5 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300 md:col-span-2"
                       >
                         Cancel Edit
                       </button>
@@ -3366,13 +3366,13 @@ export default function Home() {
                         }
                       />
                     ) : (
-                      <div className="rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm">
+                      <div className="rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm">
                         <p className="text-slate-500">Target Distance</p>
                         <p className="mt-1 text-slate-600">Not required for gym</p>
                       </div>
                     )}
 
-                    <div className="rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm">
+                    <div className="rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm">
                       <p className="text-slate-500">Calculated intensity</p>
                       <p className="mt-1 font-semibold text-emerald-300">
                         {newTraining.intensity}
@@ -3389,7 +3389,7 @@ export default function Home() {
                     {editingTrainingId && (
                       <button
                         onClick={resetTrainingForm}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300 md:col-span-2"
+                        className="rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-2.5 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300 md:col-span-2"
                       >
                         Cancel Edit
                       </button>
@@ -3447,7 +3447,7 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#0b1120]/90 p-5 shadow-xl shadow-black/20 backdrop-blur-xl sm:p-6">
+    <div className="rounded-3xl border border-pink-100/10 bg-[#171024]/90 p-5 shadow-xl shadow-pink-950/20 backdrop-blur-xl sm:p-6">
       <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
         {label}
       </p>
@@ -3471,7 +3471,7 @@ function Input({
       placeholder={placeholder}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+      className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-pink-300/50"
     />
   );
 }
@@ -3497,7 +3497,7 @@ function NumberInput({
         placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+        className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-pink-300/50"
       />
     </label>
   );
@@ -3523,7 +3523,7 @@ function DateInput({
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-300/50"
+        className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm text-white outline-none focus:border-pink-300/50"
       />
     </label>
   );
@@ -3546,7 +3546,7 @@ function TimeInput({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-300/50"
+        className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm text-white outline-none focus:border-pink-300/50"
       >
         <option value="">Select time</option>
         {timeOptions.map((time) => (
@@ -3576,7 +3576,7 @@ function TrainingTimeInput({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-300/50"
+        className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm text-white outline-none focus:border-pink-300/50"
       >
         <option value="">Select time</option>
         {trainingTimeOptions.map((time) => (
@@ -3602,7 +3602,7 @@ function SelectInput({
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-300/50"
+      className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-2.5 text-sm text-white outline-none focus:border-pink-300/50"
     >
       {options.map((option) => (
         <option key={option} value={option}>
@@ -3628,7 +3628,7 @@ function TabButton({
       onClick={onClick}
       className={`rounded-xl px-3 py-2.5 text-xs font-semibold tracking-wide transition sm:px-4 sm:text-sm ${
         active
-          ? "bg-gradient-to-r from-cyan-300 to-violet-300 text-slate-950 shadow-lg shadow-cyan-950/20"
+          ? "bg-gradient-to-r from-pink-300 via-fuchsia-300 to-violet-300 text-[#160A18] shadow-lg shadow-pink-950/30"
           : "text-slate-400 hover:bg-white/5 hover:text-white"
       }`}
     >
@@ -3660,18 +3660,18 @@ function AuthScreen({
   onSignUp: () => void;
 }) {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#030712] text-white">
+    <main className="min-h-screen overflow-hidden bg-[#080611] text-white">
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-[-10%] top-[-10%] h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute right-[-10%] top-[20%] h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[30%] h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute left-[-10%] top-[-10%] h-96 w-96 rounded-full bg-pink-300/20 blur-3xl" />
+        <div className="absolute right-[-10%] top-[20%] h-96 w-96 rounded-full bg-violet-300/20 blur-3xl" />
+        <div className="absolute bottom-[-20%] left-[30%] h-96 w-96 rounded-full bg-pink-200/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-5xl items-center px-4 py-10 sm:px-6">
-        <section className="grid w-full gap-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl lg:grid-cols-[1fr_0.9fr] lg:p-8">
+        <section className="grid w-full gap-6 overflow-hidden rounded-[2rem] border border-pink-100/10 bg-white/[0.055] p-6 shadow-2xl shadow-pink-950/20 backdrop-blur-xl lg:grid-cols-[1fr_0.9fr] lg:p-8">
           <div className="flex flex-col justify-between gap-10">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">
+              <p className="text-xs uppercase tracking-[0.35em] text-pink-200">
                 Life Optimiser
               </p>
               <h1 className="mt-8 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -3684,15 +3684,15 @@ function AuthScreen({
               </p>
             </div>
 
-            <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5">
-              <p className="text-sm font-semibold text-cyan-100">
+            <div className="rounded-3xl border border-pink-300/20 bg-pink-300/10 p-5">
+              <p className="text-sm font-semibold text-pink-50">
                 One account. One dashboard. Same plan on every device.
               </p>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-[#0b1120]/90 p-5 shadow-xl shadow-black/20 sm:p-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+          <div className="rounded-3xl border border-pink-100/10 bg-[#171024]/90 p-5 shadow-xl shadow-pink-950/20 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-pink-200">
               Account
             </p>
             <h2 className="mt-2 text-2xl font-semibold">Log in or sign up</h2>
@@ -3703,7 +3703,7 @@ function AuthScreen({
                 placeholder="Email"
                 value={authEmail}
                 onChange={(event) => onEmailChange(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+                className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-pink-300/50"
               />
 
               <input
@@ -3711,14 +3711,14 @@ function AuthScreen({
                 placeholder="Password"
                 value={authPassword}
                 onChange={(event) => onPasswordChange(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+                className="w-full rounded-2xl border border-pink-100/10 bg-[#120B18] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-pink-300/50"
               />
 
               <button
                 type="button"
                 onClick={onSignIn}
                 disabled={authLoading}
-                className="w-full rounded-2xl bg-cyan-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60"
+                className="w-full rounded-2xl bg-gradient-to-r from-pink-300 via-fuchsia-300 to-violet-300 px-4 py-3 text-sm font-semibold text-[#160A18] shadow-lg shadow-pink-400/20 transition hover:scale-[1.01] disabled:opacity-60"
               >
                 Log in
               </button>
@@ -3727,14 +3727,14 @@ function AuthScreen({
                 type="button"
                 onClick={onSignUp}
                 disabled={authLoading}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-60"
+                className="w-full rounded-2xl border border-pink-100/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-60"
               >
                 Create account
               </button>
             </div>
 
             {authMessage && (
-              <p className="mt-4 rounded-2xl border border-white/10 bg-[#020617]/70 px-4 py-3 text-sm text-slate-300">
+              <p className="mt-4 rounded-2xl border border-pink-100/10 bg-[#120B18]/75 px-4 py-3 text-sm text-slate-300">
                 {authMessage}
               </p>
             )}
@@ -3762,7 +3762,7 @@ function MobileActionButton({
       }}
       className={`absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border text-lg leading-none transition md:hidden ${
         isOpen
-          ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200"
+          ? "border-pink-300/30 bg-pink-300/10 text-pink-200"
           : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
       }`}
     >
@@ -3787,7 +3787,7 @@ function ContextActions({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-4 top-14 z-30 flex items-center gap-2 rounded-2xl border border-white/10 bg-[#020617] px-3 py-2 shadow-2xl shadow-black/40 md:top-4">
+    <div className="absolute right-4 top-14 z-30 flex items-center gap-2 rounded-2xl border border-pink-100/10 bg-[#120B18] px-3 py-2 shadow-2xl shadow-pink-950/40 md:top-4">
       {onToggle && (
         <button
           type="button"
@@ -3806,7 +3806,7 @@ function ContextActions({
         <button
           type="button"
           onClick={onEdit}
-          className="text-xs text-slate-400 transition hover:text-cyan-300"
+          className="text-xs text-slate-400 transition hover:text-pink-200"
         >
           Edit
         </button>
@@ -3841,10 +3841,10 @@ function InputSlider({
   onChange: (value: number) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#020617]/60 p-4">
+    <div className="rounded-2xl border border-pink-100/10 bg-[#120B18]/70 p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm text-slate-400">{label}</p>
-        <p className="font-semibold text-cyan-300">
+        <p className="font-semibold text-pink-200">
           {value}
           {suffix}
         </p>
@@ -3857,7 +3857,7 @@ function InputSlider({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full accent-cyan-300"
+        className="w-full accent-pink-300"
       />
     </div>
   );
