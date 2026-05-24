@@ -2468,10 +2468,34 @@ export default function Home() {
 
       <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <header className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-7 lg:p-8">
-          <div className="mb-8">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">
               Life Optimiser
             </p>
+
+            <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center">
+              <div className="text-slate-400 sm:text-right">
+                <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
+                  Cloud Account
+                </p>
+                <p className="mt-1">
+                  Signed in as <span className="font-medium text-white">{user.email}</span>
+                </p>
+                {(cloudMessage || cloudLoading) && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {cloudLoading ? "Syncing with Supabase..." : cloudMessage}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={signOut}
+                className="w-fit rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+              >
+                Log out
+              </button>
+            </div>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
@@ -2541,43 +2565,6 @@ export default function Home() {
             </div>
           </div>
         </header>
-
-        <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
-                Cloud Account
-              </p>
-              <p className="mt-2 text-sm text-slate-300">
-                Signed in as <span className="text-white">{user.email}</span>
-              </p>
-              {(cloudMessage || cloudLoading) && (
-                <p className="mt-2 text-sm text-slate-400">
-                  {cloudLoading ? "Syncing with Supabase..." : cloudMessage}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={syncLocalDataToCloud}
-                disabled={cloudLoading}
-                className="rounded-2xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60"
-              >
-                Sync local data to cloud
-              </button>
-
-              <button
-                type="button"
-                onClick={signOut}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
-              >
-                Log out
-              </button>
-            </div>
-          </div>
-        </section>
 
         <section className="mb-6 grid gap-5 rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
           <InputSlider
@@ -3305,25 +3292,14 @@ export default function Home() {
               <p className="leading-7 text-slate-300">{recommendation}</p>
             </div>
 
-            <button
-              onClick={confirmPlan}
-              className="mt-6 w-full rounded-2xl bg-gradient-to-r from-cyan-300 to-violet-400 px-5 py-4 font-semibold text-slate-950 transition hover:scale-[1.01]"
-            >
-              Confirm Today’s Plan
-            </button>
 
             <button
               onClick={clearSavedData}
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
+              className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-slate-300 transition hover:border-red-300/40 hover:text-red-300"
             >
               Reset Saved Data
             </button>
 
-            {confirmedMessage && (
-              <p className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-sm text-emerald-300">
-                {confirmedMessage}
-              </p>
-            )}
           </div>
         </section>
       </div>
