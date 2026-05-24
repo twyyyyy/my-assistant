@@ -43,7 +43,7 @@ type FocusTag =
 type InputTab = "schedule" | "task" | "training";
 
 type EventItem = {
-  id: number;
+  id: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -54,7 +54,7 @@ type EventItem = {
 };
 
 type FocusTask = {
-  id: number;
+  id: string;
   title: string;
   tag: FocusTag;
   deadline: string;
@@ -64,7 +64,7 @@ type FocusTask = {
 };
 
 type TrainingItem = {
-  id: number;
+  id: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -75,7 +75,7 @@ type TrainingItem = {
 };
 
 type TimelineItem = {
-  id: number;
+  id: string;
   source: "event" | "task" | "training";
   startTime: string;
   endTime: string;
@@ -87,7 +87,7 @@ type TimelineItem = {
 };
 
 type UpcomingEvent = {
-  eventId: number;
+  eventId: string;
   occurrenceDate: string;
   startTime: string;
   endTime: string;
@@ -194,6 +194,115 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+
+function createLocalId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function isUuid(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  );
+}
+
+function normalizeTime(value: string | null) {
+  if (!value) return "";
+  return value.slice(0, 5);
+}
+
+function normalizeDate(value: string | null) {
+  return value ?? "";
+}
+
+function mapEventRow(row: any): EventItem {
+  return {
+    id: row.id,
+    date: normalizeDate(row.date),
+    startTime: normalizeTime(row.start_time),
+    endTime: normalizeTime(row.end_time),
+    title: row.title,
+    category: row.category as ScheduleCategory,
+    status: row.status as EventStatus,
+    repeat: row.repeat as RepeatOption,
+  };
+}
+
+function mapTaskRow(row: any): FocusTask {
+  return {
+    id: row.id,
+    title: row.title,
+    tag: row.tag as FocusTag,
+    deadline: normalizeDate(row.deadline),
+    plannedDate: normalizeDate(row.planned_date),
+    startTime: normalizeTime(row.start_time),
+    endTime: normalizeTime(row.end_time),
+  };
+}
+
+function mapTrainingRow(row: any): TrainingItem {
+  return {
+    id: row.id,
+    date: normalizeDate(row.date),
+    startTime: normalizeTime(row.start_time),
+    endTime: normalizeTime(row.end_time),
+    sport: row.sport as TrainingSport,
+    session: row.session as TrainingSession,
+    intensity: row.intensity as TrainingIntensity,
+    targetDistance: row.target_distance ?? "",
+  };
+}
+
+function getEventPayload(event: Omit<EventItem, "id">, userId: string) {
+  return {
+    user_id: userId,
+    date: event.date,
+    start_time: event.startTime || null,
+    end_time: event.endTime || null,
+    title: event.title,
+    category: event.category,
+    status: event.status,
+    repeat: event.repeat,
+  };
+}
+
+function getTaskPayload(task: Omit<FocusTask, "id">, userId: string) {
+  return {
+    user_id: userId,
+    title: task.title,
+    tag: task.tag,
+    deadline: task.deadline || null,
+    planned_date: task.plannedDate || null,
+    start_time: task.startTime || null,
+    end_time: task.endTime || null,
+  };
+}
+
+function getTrainingPayload(training: Omit<TrainingItem, "id">, userId: string) {
+  return {
+    user_id: userId,
+    date: training.date,
+    start_time: training.startTime || null,
+    end_time: training.endTime || null,
+    sport: training.sport,
+    session: training.session,
+    intensity: training.intensity,
+    target_distance: training.targetDistance || null,
+  };
+}
+
+function parseCompletionKey(completionKey: string) {
+  const [source, id, date] = completionKey.split("|");
+
+  if (!source || !id || !date) return null;
+
+  return {
+    source: source as TimelineItem["source"],
+    id,
+    date,
+  };
+}
+
 function calculateReadinessScore({
   sleepHours,
   soreness,
@@ -289,10 +398,10 @@ function getTrainingStatusText(training: TrainingItem) {
 
 function getCompletionKey(
   source: TimelineItem["source"],
-  id: number,
+  id: string,
   date: string,
 ) {
-  return `${source}-${id}-${date}`;
+  return `${source}|${id}|${date}`;
 }
 
 function getProgressMessage(totalItems: number, completedItems: number) {
@@ -978,7 +1087,7 @@ const DEFAULT_READINESS: ReadinessState = {
 function getDefaultEvents(todayDate: string): EventItem[] {
   return [
     {
-      id: 1,
+      id: "default-event-1",
       date: todayDate,
       startTime: "09:00",
       endTime: "18:00",
@@ -993,7 +1102,7 @@ function getDefaultEvents(todayDate: string): EventItem[] {
 function getDefaultFocusTasks(todayDate: string): FocusTask[] {
   return [
     {
-      id: 1,
+      id: "default-task-1",
       title: "Finish frontend task",
       tag: "High Focus",
       deadline: "",
@@ -1007,7 +1116,7 @@ function getDefaultFocusTasks(todayDate: string): FocusTask[] {
 function getDefaultTrainings(todayDate: string): TrainingItem[] {
   return [
     {
-      id: 1,
+      id: "default-training-1",
       date: todayDate,
       startTime: "19:30",
       endTime: "20:30",
@@ -1026,6 +1135,9 @@ export default function Home() {
   const [authPassword, setAuthPassword] = useState("");
   const [authMessage, setAuthMessage] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudMessage, setCloudMessage] = useState("");
 
   const todayDate = getTodayDateString();
   const inputSectionRef = useRef<HTMLElement | null>(null);
@@ -1039,9 +1151,9 @@ export default function Home() {
   const [fatigue, setFatigue] = useState(DEFAULT_READINESS.fatigue);
   const [confirmedMessage, setConfirmedMessage] = useState("");
 
-  const [editingEventId, setEditingEventId] = useState<number | null>(null);
-  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
-  const [editingTrainingId, setEditingTrainingId] = useState<number | null>(
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTrainingId, setEditingTrainingId] = useState<string | null>(
     null,
   );
   const [activeInputTab, setActiveInputTab] = useState<InputTab>("schedule");
@@ -1091,17 +1203,25 @@ export default function Home() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted) return;
       setUser(data.user);
+      setAuthChecked(true);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setAuthChecked(true);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -1144,6 +1264,11 @@ export default function Home() {
   }, [todayDate]);
 
   useEffect(() => {
+    if (!hasMounted || !user) return;
+    loadCloudData(user.id);
+  }, [hasMounted, user?.id]);
+
+  useEffect(() => {
     if (!hasMounted) return;
     window.localStorage.setItem(STORAGE_KEYS.events, JSON.stringify(events));
   }, [events, hasMounted]);
@@ -1183,7 +1308,25 @@ export default function Home() {
         fatigue,
       }),
     );
-  }, [sleepHours, soreness, stress, fatigue, hasMounted]);
+
+    if (!user) return;
+
+    const saveReadiness = window.setTimeout(() => {
+      supabase.from("readiness_logs").upsert(
+        {
+          user_id: user.id,
+          date: todayDate,
+          sleep_hours: sleepHours,
+          soreness,
+          stress,
+          fatigue,
+        },
+        { onConflict: "user_id,date" },
+      );
+    }, 500);
+
+    return () => window.clearTimeout(saveReadiness);
+  }, [sleepHours, soreness, stress, fatigue, hasMounted, user?.id, todayDate]);
 
   useEffect(() => {
     setHasMounted(true);
@@ -1403,6 +1546,227 @@ export default function Home() {
     planType,
   });
 
+
+  async function loadCloudData(userId: string) {
+    setCloudLoading(true);
+    setCloudMessage("");
+
+    const [
+      eventsResult,
+      tasksResult,
+      trainingsResult,
+      readinessResult,
+      completedResult,
+    ] = await Promise.all([
+      supabase
+        .from("events")
+        .select("*")
+        .eq("user_id", userId)
+        .order("date", { ascending: true })
+        .order("start_time", { ascending: true }),
+      supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("training_sessions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("date", { ascending: true })
+        .order("start_time", { ascending: true }),
+      supabase
+        .from("readiness_logs")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", todayDate)
+        .maybeSingle(),
+      supabase
+        .from("completed_items")
+        .select("*")
+        .eq("user_id", userId),
+    ]);
+
+    const firstError =
+      eventsResult.error ||
+      tasksResult.error ||
+      trainingsResult.error ||
+      readinessResult.error ||
+      completedResult.error;
+
+    if (firstError) {
+      setCloudMessage(firstError.message);
+      setCloudLoading(false);
+      return;
+    }
+
+    const cloudEvents = (eventsResult.data ?? []).map(mapEventRow);
+    const cloudTasks = (tasksResult.data ?? []).map(mapTaskRow);
+    const cloudTrainings = (trainingsResult.data ?? []).map(mapTrainingRow);
+    const cloudCompleted = (completedResult.data ?? []).map((item: any) =>
+      getCompletionKey(item.item_type, item.item_id, item.completion_date),
+    );
+
+    const hasCloudData =
+      cloudEvents.length > 0 ||
+      cloudTasks.length > 0 ||
+      cloudTrainings.length > 0 ||
+      cloudCompleted.length > 0 ||
+      Boolean(readinessResult.data);
+
+    if (hasCloudData) {
+      setEvents(cloudEvents);
+      setFocusTasks(cloudTasks);
+      setTrainings(cloudTrainings);
+      setCompletedItems(cloudCompleted);
+
+      if (readinessResult.data) {
+        setSleepHours(Number(readinessResult.data.sleep_hours));
+        setSoreness(Number(readinessResult.data.soreness));
+        setStress(Number(readinessResult.data.stress));
+        setFatigue(Number(readinessResult.data.fatigue));
+      }
+
+      setCloudMessage("Cloud data loaded.");
+    } else {
+      setCloudMessage("No cloud data yet. Add new items here, or sync this device to upload existing local data.");
+    }
+
+    setCloudLoading(false);
+  }
+
+  async function syncLocalDataToCloud() {
+    if (!user) return;
+
+    setCloudLoading(true);
+    setCloudMessage("Syncing local data to cloud...");
+
+    const eventIdMap = new Map<string, string>();
+    const taskIdMap = new Map<string, string>();
+    const trainingIdMap = new Map<string, string>();
+
+    const uploadedEvents: EventItem[] = [];
+    const uploadedTasks: FocusTask[] = [];
+    const uploadedTrainings: TrainingItem[] = [];
+
+    for (const event of events) {
+      const { id: _id, ...eventWithoutId } = event;
+      const { data, error } = await supabase
+        .from("events")
+        .insert(getEventPayload(eventWithoutId, user.id))
+        .select()
+        .single();
+
+      if (error) {
+        setCloudMessage(error.message);
+        setCloudLoading(false);
+        return;
+      }
+
+      const mapped = mapEventRow(data);
+      eventIdMap.set(String(event.id), mapped.id);
+      uploadedEvents.push(mapped);
+    }
+
+    for (const task of focusTasks) {
+      const { id: _id, ...taskWithoutId } = task;
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert(getTaskPayload(taskWithoutId, user.id))
+        .select()
+        .single();
+
+      if (error) {
+        setCloudMessage(error.message);
+        setCloudLoading(false);
+        return;
+      }
+
+      const mapped = mapTaskRow(data);
+      taskIdMap.set(String(task.id), mapped.id);
+      uploadedTasks.push(mapped);
+    }
+
+    for (const training of trainings) {
+      const { id: _id, ...trainingWithoutId } = training;
+      const { data, error } = await supabase
+        .from("training_sessions")
+        .insert(getTrainingPayload(trainingWithoutId, user.id))
+        .select()
+        .single();
+
+      if (error) {
+        setCloudMessage(error.message);
+        setCloudLoading(false);
+        return;
+      }
+
+      const mapped = mapTrainingRow(data);
+      trainingIdMap.set(String(training.id), mapped.id);
+      uploadedTrainings.push(mapped);
+    }
+
+    await supabase.from("readiness_logs").upsert(
+      {
+        user_id: user.id,
+        date: todayDate,
+        sleep_hours: sleepHours,
+        soreness,
+        stress,
+        fatigue,
+      },
+      { onConflict: "user_id,date" },
+    );
+
+    const completionRows = completedItems
+      .map((completionKey) => {
+        const parsed = parseCompletionKey(completionKey);
+        if (!parsed) return null;
+
+        const newId =
+          parsed.source === "event"
+            ? eventIdMap.get(parsed.id)
+            : parsed.source === "task"
+              ? taskIdMap.get(parsed.id)
+              : trainingIdMap.get(parsed.id);
+
+        if (!newId || !isUuid(newId)) return null;
+
+        return {
+          user_id: user.id,
+          item_type: parsed.source,
+          item_id: newId,
+          completion_date: parsed.date,
+        };
+      })
+      .filter(
+        (item): item is {
+          user_id: string;
+          item_type: "event" | "task" | "training";
+          item_id: string;
+          completion_date: string;
+        } => item !== null,
+      );
+
+    if (completionRows.length > 0) {
+      await supabase.from("completed_items").upsert(completionRows, {
+        onConflict: "user_id,item_type,item_id,completion_date",
+      });
+    }
+
+    setEvents(uploadedEvents);
+    setFocusTasks(uploadedTasks);
+    setTrainings(uploadedTrainings);
+
+    const refreshedCompletedItems = completionRows.map((item: any) =>
+      getCompletionKey(item.item_type, item.item_id, item.completion_date),
+    );
+
+    setCompletedItems(refreshedCompletedItems);
+    setCloudMessage("Local data synced to cloud. You can now log in on your phone to see the same data.");
+    setCloudLoading(false);
+  }
+
   function scrollToInputSection() {
     window.setTimeout(() => {
       inputSectionRef.current?.scrollIntoView({
@@ -1451,7 +1815,7 @@ export default function Home() {
     setEditingTrainingId(null);
   }
 
-  function addOrUpdateEvent() {
+  async function addOrUpdateEvent() {
     if (
       !newEvent.date ||
       !newEvent.startTime ||
@@ -1461,20 +1825,70 @@ export default function Home() {
       return;
     }
 
-    if (editingEventId) {
+    const eventPayload = {
+      date: newEvent.date,
+      startTime: newEvent.startTime,
+      endTime: newEvent.endTime,
+      title: newEvent.title,
+      category: newEvent.category,
+      status: newEvent.status,
+      repeat: newEvent.repeat,
+    };
+
+    if (user) {
+      setCloudLoading(true);
+
+      if (editingEventId && isUuid(editingEventId)) {
+        const { data, error } = await supabase
+          .from("events")
+          .update(getEventPayload(eventPayload, user.id))
+          .eq("id", editingEventId)
+          .eq("user_id", user.id)
+          .select()
+          .single();
+
+        if (error) {
+          setCloudMessage(error.message);
+          setCloudLoading(false);
+          return;
+        }
+
+        const updatedEvent = mapEventRow(data);
+        setEvents((currentEvents) =>
+          currentEvents.map((event) =>
+            event.id === editingEventId ? updatedEvent : event,
+          ),
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("events")
+          .insert(getEventPayload(eventPayload, user.id))
+          .select()
+          .single();
+
+        if (error) {
+          setCloudMessage(error.message);
+          setCloudLoading(false);
+          return;
+        }
+
+        const insertedEvent = mapEventRow(data);
+        setEvents((currentEvents) =>
+          editingEventId
+            ? currentEvents.map((event) =>
+                event.id === editingEventId ? insertedEvent : event,
+              )
+            : [...currentEvents, insertedEvent],
+        );
+      }
+
+      setCloudMessage("Schedule saved to cloud.");
+      setCloudLoading(false);
+    } else if (editingEventId) {
       setEvents((currentEvents) =>
         currentEvents.map((event) =>
           event.id === editingEventId
-            ? {
-                ...event,
-                date: newEvent.date,
-                startTime: newEvent.startTime,
-                endTime: newEvent.endTime,
-                title: newEvent.title,
-                category: newEvent.category,
-                status: newEvent.status,
-                repeat: newEvent.repeat,
-              }
+            ? { ...event, ...eventPayload }
             : event,
         ),
       );
@@ -1482,14 +1896,8 @@ export default function Home() {
       setEvents((currentEvents) => [
         ...currentEvents,
         {
-          id: Date.now(),
-          date: newEvent.date,
-          startTime: newEvent.startTime,
-          endTime: newEvent.endTime,
-          title: newEvent.title,
-          category: newEvent.category,
-          status: newEvent.status,
-          repeat: newEvent.repeat,
+          id: createLocalId("event"),
+          ...eventPayload,
         },
       ]);
     }
@@ -1498,7 +1906,7 @@ export default function Home() {
     setConfirmedMessage("");
   }
 
-  function startEditingEvent(id: number) {
+  function startEditingEvent(id: string) {
     const eventToEdit = events.find((event) => event.id === id);
 
     if (!eventToEdit) return;
@@ -1519,36 +1927,79 @@ export default function Home() {
     scrollToInputSection();
   }
 
-  function addOrUpdateFocusTask() {
+  async function addOrUpdateFocusTask() {
     if (!newFocusTask.title) return;
 
-    if (editingTaskId) {
+    const taskPayload = {
+      title: newFocusTask.title,
+      tag: newFocusTask.tag,
+      deadline: newFocusTask.deadline,
+      plannedDate: newFocusTask.plannedDate,
+      startTime: newFocusTask.startTime,
+      endTime: newFocusTask.endTime,
+    };
+
+    if (user) {
+      setCloudLoading(true);
+
+      if (editingTaskId && isUuid(editingTaskId)) {
+        const { data, error } = await supabase
+          .from("tasks")
+          .update(getTaskPayload(taskPayload, user.id))
+          .eq("id", editingTaskId)
+          .eq("user_id", user.id)
+          .select()
+          .single();
+
+        if (error) {
+          setCloudMessage(error.message);
+          setCloudLoading(false);
+          return;
+        }
+
+        const updatedTask = mapTaskRow(data);
+        setFocusTasks((currentTasks) =>
+          currentTasks.map((task) =>
+            task.id === editingTaskId ? updatedTask : task,
+          ),
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("tasks")
+          .insert(getTaskPayload(taskPayload, user.id))
+          .select()
+          .single();
+
+        if (error) {
+          setCloudMessage(error.message);
+          setCloudLoading(false);
+          return;
+        }
+
+        const insertedTask = mapTaskRow(data);
+        setFocusTasks((currentTasks) =>
+          editingTaskId
+            ? currentTasks.map((task) =>
+                task.id === editingTaskId ? insertedTask : task,
+              )
+            : [...currentTasks, insertedTask],
+        );
+      }
+
+      setCloudMessage("Task saved to cloud.");
+      setCloudLoading(false);
+    } else if (editingTaskId) {
       setFocusTasks((currentTasks) =>
         currentTasks.map((task) =>
-          task.id === editingTaskId
-            ? {
-                ...task,
-                title: newFocusTask.title,
-                tag: newFocusTask.tag,
-                deadline: newFocusTask.deadline,
-                plannedDate: newFocusTask.plannedDate,
-                startTime: newFocusTask.startTime,
-                endTime: newFocusTask.endTime,
-              }
-            : task,
+          task.id === editingTaskId ? { ...task, ...taskPayload } : task,
         ),
       );
     } else {
       setFocusTasks((currentTasks) => [
         ...currentTasks,
         {
-          id: Date.now(),
-          title: newFocusTask.title,
-          tag: newFocusTask.tag,
-          deadline: newFocusTask.deadline,
-          plannedDate: newFocusTask.plannedDate,
-          startTime: newFocusTask.startTime,
-          endTime: newFocusTask.endTime,
+          id: createLocalId("task"),
+          ...taskPayload,
         },
       ]);
     }
@@ -1557,7 +2008,7 @@ export default function Home() {
     setConfirmedMessage("");
   }
 
-  function startEditingTask(id: number) {
+  function startEditingTask(id: string) {
     const taskToEdit = focusTasks.find((task) => task.id === id);
 
     if (!taskToEdit) return;
@@ -1578,25 +2029,75 @@ export default function Home() {
     scrollToInputSection();
   }
 
-  function addOrUpdateTraining() {
+  async function addOrUpdateTraining() {
     if (!newTraining.date || !newTraining.startTime || !newTraining.endTime) {
       return;
     }
 
-    if (editingTrainingId) {
+    const trainingPayload = {
+      date: newTraining.date,
+      startTime: newTraining.startTime,
+      endTime: newTraining.endTime,
+      sport: newTraining.sport,
+      session: newTraining.session,
+      intensity: newTraining.intensity,
+      targetDistance: newTraining.targetDistance,
+    };
+
+    if (user) {
+      setCloudLoading(true);
+
+      if (editingTrainingId && isUuid(editingTrainingId)) {
+        const { data, error } = await supabase
+          .from("training_sessions")
+          .update(getTrainingPayload(trainingPayload, user.id))
+          .eq("id", editingTrainingId)
+          .eq("user_id", user.id)
+          .select()
+          .single();
+
+        if (error) {
+          setCloudMessage(error.message);
+          setCloudLoading(false);
+          return;
+        }
+
+        const updatedTraining = mapTrainingRow(data);
+        setTrainings((currentTrainings) =>
+          currentTrainings.map((training) =>
+            training.id === editingTrainingId ? updatedTraining : training,
+          ),
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("training_sessions")
+          .insert(getTrainingPayload(trainingPayload, user.id))
+          .select()
+          .single();
+
+        if (error) {
+          setCloudMessage(error.message);
+          setCloudLoading(false);
+          return;
+        }
+
+        const insertedTraining = mapTrainingRow(data);
+        setTrainings((currentTrainings) =>
+          editingTrainingId
+            ? currentTrainings.map((training) =>
+                training.id === editingTrainingId ? insertedTraining : training,
+              )
+            : [...currentTrainings, insertedTraining],
+        );
+      }
+
+      setCloudMessage("Training saved to cloud.");
+      setCloudLoading(false);
+    } else if (editingTrainingId) {
       setTrainings((currentTrainings) =>
         currentTrainings.map((training) =>
           training.id === editingTrainingId
-            ? {
-                ...training,
-                date: newTraining.date,
-                startTime: newTraining.startTime,
-                endTime: newTraining.endTime,
-                sport: newTraining.sport,
-                session: newTraining.session,
-                intensity: newTraining.intensity,
-                targetDistance: newTraining.targetDistance,
-              }
+            ? { ...training, ...trainingPayload }
             : training,
         ),
       );
@@ -1604,14 +2105,8 @@ export default function Home() {
       setTrainings((currentTrainings) => [
         ...currentTrainings,
         {
-          id: Date.now(),
-          date: newTraining.date,
-          startTime: newTraining.startTime,
-          endTime: newTraining.endTime,
-          sport: newTraining.sport,
-          session: newTraining.session,
-          intensity: newTraining.intensity,
-          targetDistance: newTraining.targetDistance,
+          id: createLocalId("training"),
+          ...trainingPayload,
         },
       ]);
     }
@@ -1620,7 +2115,7 @@ export default function Home() {
     setConfirmedMessage("");
   }
 
-  function startEditingTraining(id: number) {
+  function startEditingTraining(id: string) {
     const trainingToEdit = trainings.find((training) => training.id === id);
 
     if (!trainingToEdit) return;
@@ -1641,7 +2136,10 @@ export default function Home() {
     scrollToInputSection();
   }
 
-  function toggleCompletionKey(completionKey: string) {
+  async function toggleCompletionKey(completionKey: string) {
+    const parsed = parseCompletionKey(completionKey);
+    const isCompleted = completedItems.includes(completionKey);
+
     setCompletedItems((currentItems) => {
       if (currentItems.includes(completionKey)) {
         return currentItems.filter((key) => key !== completionKey);
@@ -1650,6 +2148,32 @@ export default function Home() {
       return [...currentItems, completionKey];
     });
 
+    if (user && parsed && isUuid(parsed.id)) {
+      if (isCompleted) {
+        const { error } = await supabase
+          .from("completed_items")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("item_type", parsed.source)
+          .eq("item_id", parsed.id)
+          .eq("completion_date", parsed.date);
+
+        if (error) setCloudMessage(error.message);
+      } else {
+        const { error } = await supabase.from("completed_items").upsert(
+          {
+            user_id: user.id,
+            item_type: parsed.source,
+            item_id: parsed.id,
+            completion_date: parsed.date,
+          },
+          { onConflict: "user_id,item_type,item_id,completion_date" },
+        );
+
+        if (error) setCloudMessage(error.message);
+      }
+    }
+
     setConfirmedMessage("");
   }
 
@@ -1657,7 +2181,34 @@ export default function Home() {
     toggleCompletionKey(item.completionKey);
   }
 
-  function removeTimelineItem(item: TimelineItem) {
+  async function removeTimelineItem(item: TimelineItem) {
+    if (user && isUuid(item.id)) {
+      const table =
+        item.source === "event"
+          ? "events"
+          : item.source === "task"
+            ? "tasks"
+            : "training_sessions";
+
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq("id", item.id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setCloudMessage(error.message);
+        return;
+      }
+
+      await supabase
+        .from("completed_items")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("item_type", item.source)
+        .eq("item_id", item.id);
+    }
+
     if (item.source === "event") {
       setEvents((currentEvents) =>
         currentEvents.filter((event) => event.id !== item.id),
@@ -1676,16 +2227,40 @@ export default function Home() {
       );
     }
 
+    setCompletedItems((currentItems) =>
+      currentItems.filter((key) => !key.startsWith(`${item.source}|${item.id}|`)),
+    );
+
     setConfirmedMessage("");
   }
 
-  function removeFocusTask(id: number) {
+  async function removeFocusTask(id: string) {
+    if (user && isUuid(id)) {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setCloudMessage(error.message);
+        return;
+      }
+
+      await supabase
+        .from("completed_items")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("item_type", "task")
+        .eq("item_id", id);
+    }
+
     setFocusTasks((currentTasks) =>
       currentTasks.filter((task) => task.id !== id),
     );
 
     setCompletedItems((currentItems) =>
-      currentItems.filter((key) => !key.includes(`task-${id}-`)),
+      currentItems.filter((key) => !key.startsWith(`task|${id}|`)),
     );
 
     if (editingTaskId === id) {
@@ -1695,13 +2270,33 @@ export default function Home() {
     setConfirmedMessage("");
   }
 
-  function removeTraining(id: number) {
+  async function removeTraining(id: string) {
+    if (user && isUuid(id)) {
+      const { error } = await supabase
+        .from("training_sessions")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setCloudMessage(error.message);
+        return;
+      }
+
+      await supabase
+        .from("completed_items")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("item_type", "training")
+        .eq("item_id", id);
+    }
+
     setTrainings((currentTrainings) =>
       currentTrainings.filter((training) => training.id !== id),
     );
 
     setCompletedItems((currentItems) =>
-      currentItems.filter((key) => !key.includes(`training-${id}-`)),
+      currentItems.filter((key) => !key.startsWith(`training|${id}|`)),
     );
 
     if (editingTrainingId === id) {
@@ -1711,9 +2306,33 @@ export default function Home() {
     setConfirmedMessage("");
   }
 
-  function removeEvent(id: number) {
+  async function removeEvent(id: string) {
+    if (user && isUuid(id)) {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setCloudMessage(error.message);
+        return;
+      }
+
+      await supabase
+        .from("completed_items")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("item_type", "event")
+        .eq("item_id", id);
+    }
+
     setEvents((currentEvents) =>
       currentEvents.filter((event) => event.id !== id),
+    );
+
+    setCompletedItems((currentItems) =>
+      currentItems.filter((key) => !key.startsWith(`event|${id}|`)),
     );
 
     setConfirmedMessage("");
@@ -1789,6 +2408,8 @@ export default function Home() {
 
   async function signOut() {
     await supabase.auth.signOut();
+    setUser(null);
+    setCloudMessage("");
     setAuthMessage("Logged out.");
   }
 
@@ -1803,7 +2424,37 @@ export default function Home() {
 
   function confirmPlan() {
     setConfirmedMessage(
-      "Today’s plan is confirmed. Local device saving is still active. Supabase data sync comes next after login is tested.",
+      "Today’s plan is confirmed and synced for this account.",
+    );
+  }
+
+  if (!authChecked) {
+    return (
+      <AuthScreen
+        authEmail={authEmail}
+        authPassword={authPassword}
+        authMessage="Checking your session..."
+        authLoading
+        onEmailChange={setAuthEmail}
+        onPasswordChange={setAuthPassword}
+        onSignIn={signIn}
+        onSignUp={signUp}
+      />
+    );
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        authEmail={authEmail}
+        authPassword={authPassword}
+        authMessage={authMessage}
+        authLoading={authLoading}
+        onEmailChange={setAuthEmail}
+        onPasswordChange={setAuthPassword}
+        onSignIn={signIn}
+        onSignUp={signUp}
+      />
     );
   }
 
@@ -1892,16 +2543,30 @@ export default function Home() {
         </header>
 
         <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
-          {user ? (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
-                  Account
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
+                Cloud Account
+              </p>
+              <p className="mt-2 text-sm text-slate-300">
+                Signed in as <span className="text-white">{user.email}</span>
+              </p>
+              {(cloudMessage || cloudLoading) && (
+                <p className="mt-2 text-sm text-slate-400">
+                  {cloudLoading ? "Syncing with Supabase..." : cloudMessage}
                 </p>
-                <p className="mt-2 text-sm text-slate-300">
-                  Logged in as <span className="text-white">{user.email}</span>
-                </p>
-              </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={syncLocalDataToCloud}
+                disabled={cloudLoading}
+                className="rounded-2xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60"
+              >
+                Sync local data to cloud
+              </button>
 
               <button
                 type="button"
@@ -1911,61 +2576,7 @@ export default function Home() {
                 Log out
               </button>
             </div>
-          ) : (
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                Account
-              </p>
-              <h2 className="mt-2 text-xl font-semibold">
-                Sign in to sync your dashboard
-              </h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Create an account first. Supabase sync will be connected after login works.
-              </p>
-
-              <div className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={authEmail}
-                  onChange={(event) => setAuthEmail(event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
-                />
-
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={authPassword}
-                  onChange={(event) => setAuthPassword(event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-[#020617] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
-                />
-
-                <button
-                  type="button"
-                  onClick={signIn}
-                  disabled={authLoading}
-                  className="rounded-2xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60"
-                >
-                  Log in
-                </button>
-
-                <button
-                  type="button"
-                  onClick={signUp}
-                  disabled={authLoading}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-60"
-                >
-                  Sign up
-                </button>
-              </div>
-            </div>
-          )}
-
-          {authMessage && (
-            <p className="mt-4 rounded-2xl border border-white/10 bg-[#020617]/70 px-4 py-2.5 text-sm text-slate-300">
-              {authMessage}
-            </p>
-          )}
+          </div>
         </section>
 
         <section className="mb-6 grid gap-5 rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
@@ -2949,6 +3560,112 @@ function TabButton({
 }
 
 
+
+
+function AuthScreen({
+  authEmail,
+  authPassword,
+  authMessage,
+  authLoading,
+  onEmailChange,
+  onPasswordChange,
+  onSignIn,
+  onSignUp,
+}: {
+  authEmail: string;
+  authPassword: string;
+  authMessage: string;
+  authLoading: boolean;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSignIn: () => void;
+  onSignUp: () => void;
+}) {
+  return (
+    <main className="min-h-screen overflow-hidden bg-[#030712] text-white">
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute left-[-10%] top-[-10%] h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="absolute right-[-10%] top-[20%] h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="absolute bottom-[-20%] left-[30%] h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto flex min-h-screen max-w-5xl items-center px-4 py-10 sm:px-6">
+        <section className="grid w-full gap-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl lg:grid-cols-[1fr_0.9fr] lg:p-8">
+          <div className="flex flex-col justify-between gap-10">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">
+                Life Optimiser
+              </p>
+              <h1 className="mt-8 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+                Sign in before planning your day.
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+                Your schedule, ranked tasks, training plan, readiness scores,
+                and completion status will sync securely across your laptop and
+                phone.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5">
+              <p className="text-sm font-semibold text-cyan-100">
+                One account. One dashboard. Same plan on every device.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-[#0b1120]/90 p-5 shadow-xl shadow-black/20 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
+              Account
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Log in or sign up</h2>
+
+            <div className="mt-6 space-y-3">
+              <input
+                type="email"
+                placeholder="Email"
+                value={authEmail}
+                onChange={(event) => onEmailChange(event.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+              />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={authPassword}
+                onChange={(event) => onPasswordChange(event.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-[#020617] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/50"
+              />
+
+              <button
+                type="button"
+                onClick={onSignIn}
+                disabled={authLoading}
+                className="w-full rounded-2xl bg-cyan-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60"
+              >
+                Log in
+              </button>
+
+              <button
+                type="button"
+                onClick={onSignUp}
+                disabled={authLoading}
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-60"
+              >
+                Create account
+              </button>
+            </div>
+
+            {authMessage && (
+              <p className="mt-4 rounded-2xl border border-white/10 bg-[#020617]/70 px-4 py-3 text-sm text-slate-300">
+                {authMessage}
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
 
 function MobileActionButton({
   isOpen,
