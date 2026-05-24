@@ -1157,6 +1157,7 @@ export default function Home() {
     null,
   );
   const [activeInputTab, setActiveInputTab] = useState<InputTab>("schedule");
+  const [isWeeklyOverviewOpen, setIsWeeklyOverviewOpen] = useState(false);
   const [openActionMenuKey, setOpenActionMenuKey] = useState<string | null>(null);
 
   const [completedItems, setCompletedItems] = useState<string[]>([]);
@@ -2900,60 +2901,75 @@ export default function Home() {
         </section>
 
         <section className="mb-6 grid gap-6 lg:grid-cols-12">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl lg:col-span-12">
-            <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:col-span-12">
+            <button
+              type="button"
+              onClick={() => setIsWeeklyOverviewOpen((current) => !current)}
+              className="flex w-full items-center justify-between gap-4 text-left"
+            >
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
                   Weekly Overview
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold">Weekly Load</h2>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
+                  <h2 className="text-2xl font-semibold">Weekly Load</h2>
+                  <p className="text-sm text-slate-400">
+                    {weeklyOverview.reduce((total, day) => total + day.itemCount, 0)} items across the next 7 days
+                  </p>
+                </div>
               </div>
-              <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
-                Next 7 days
-              </span>
-            </div>
 
-            <div className="grid gap-3 sm:grid-cols-7">
-              {weeklyOverview.map((day) => {
-                const loadPercentage = Math.max(
-                  6,
-                  Math.round((day.scheduledMinutes / 1440) * 100),
-                );
+              <div className="flex items-center gap-2">
+                <span className="hidden rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 sm:inline-flex">
+                  Next 7 days
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold text-slate-300 transition hover:bg-white/10">
+                  {isWeeklyOverviewOpen ? "Hide" : "Show"}
+                </span>
+              </div>
+            </button>
 
-                return (
-                  <div
-                    key={day.date}
-                    className={getWeeklyLoadCardClass(day.loadLevel)}
-                  >
-                    <div className="mb-3">
-                      <p className="text-sm font-semibold text-white">
-                        {day.dayLabel}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {day.displayDate}
-                      </p>
+            {isWeeklyOverviewOpen && (
+              <div className="mt-6 grid gap-3 sm:grid-cols-7">
+                {weeklyOverview.map((day) => {
+                  const loadPercentage = Math.max(
+                    6,
+                    Math.round((day.scheduledMinutes / 1440) * 100),
+                  );
+
+                  return (
+                    <div
+                      key={day.date}
+                      className={getWeeklyLoadCardClass(day.loadLevel)}
+                    >
+                      <div className="mb-3">
+                        <p className="text-sm font-semibold text-white">
+                          {day.dayLabel}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {day.displayDate}
+                        </p>
+                      </div>
+
+                      <div className="flex h-24 items-end rounded-xl bg-white/5 p-1">
+                        <div
+                          className={getWeeklyLoadBarClass(day.loadLevel)}
+                          style={{ height: `${loadPercentage}%` }}
+                        />
+                      </div>
+
+                      <div className="mt-3 space-y-1 text-xs text-slate-400">
+                        <p>{formatLoadFractionFromMinutes(day.scheduledMinutes)} planned</p>
+                        <p>{day.itemCount} items</p>
+                        <p className={getLoadTextClass(day.loadLevel)}>
+                          {day.loadLevel}
+                        </p>
+                      </div>
                     </div>
-
-                    <div className="flex h-24 items-end rounded-xl bg-white/5 p-1">
-                      <div
-                        className={getWeeklyLoadBarClass(day.loadLevel)}
-                        style={{ height: `${loadPercentage}%` }}
-                      />
-                    </div>
-
-                    <div className="mt-3 space-y-1 text-xs text-slate-400">
-                      <p>{formatLoadFractionFromMinutes(day.scheduledMinutes)} planned</p>
-                      <p>{day.itemCount} items</p>
-                      <p
-                        className={getLoadTextClass(day.loadLevel)}
-                      >
-                        {day.loadLevel}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
